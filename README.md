@@ -1,9 +1,7 @@
 # OAR_Aisle
 
 OAR Aisle 是一个致力于打造沉浸式多人游戏联机体验的软件。
-使用Python3语言
-
-目前使用Click框架，是一个命令行工具
+使用Python3编写
 
 OAR是一个Minecraft多人联机游戏服务器，欢迎来主页看看 --> <https://ruofengx.cn/oar-01>
 
