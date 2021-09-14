@@ -3,7 +3,6 @@ from config import *
 import NATTypeDetector
 import platform
 import os
-import subprocess
 import logging
 
 # logging相关配置
@@ -50,7 +49,7 @@ class FrpCtl(AisleDefault):  # 用来创建、控制单个frp进程的类
         # 确定frp相对路径
         system = platform.system().lower()
         arch = platform.architecture()[0][0:2]
-        self.binPath = f'./lib/' \
+        self.binPath = f'./bin/' \
                        f'frp_' \
                        f'{FRP_VERSION}_' \
                        f'{system}_' \
@@ -67,21 +66,17 @@ class FrpCtl(AisleDefault):  # 用来创建、控制单个frp进程的类
             self.logger.warning(f'没有找到对应的frp文件，frp将无法启动，请联系开发者以获取帮助。检测到的操作系统:{system} {arch}')
 
         # 确定role为server还是client
-        self.role = role
-        self.logger.info(f'使用{role}角色')
-        if role == 'client':
-            self.logger.info('作为服务端启动')
-            self.startXTCP()
 
         # 确定启动参数
         self.args = args
 
         self.logger.info('初始化完成')
 
-    def startXTCP(self):
-        start = [self.binPath] + (self.args.split(' '))
-        # TODO: 以特定参数启动XTCP
-        '''subprocess.Popen(
+
+'''
+    def startXTCPHost(self):
+        # start = [self.binPath] + (self.args.split(' '))
+        subprocess.Popen(
             start,
             bufsize=0,
             executable=None,
@@ -96,6 +91,5 @@ class FrpCtl(AisleDefault):  # 用来创建、控制单个frp进程的类
             universal_newlines=False,
             startupinfo=None,
             creationflags=0
-        )'''
-
-
+        )
+'''
