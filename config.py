@@ -1,7 +1,7 @@
 VERSION = '1.0.0'
 INFO_EN = 'OAR Aisle is a software aiming to connect every OAR player together and enjoy a immersive multiplayer ' \
           'experience without any disturb. '
-INFO_ZH = 'OAR Aisle 是一个致力于打造沉浸式多人游戏体验的软件。'
+INFO_ZH = 'OAR Aisle 是一个致力于打造沉浸式多人游戏联机体验的软件。'
 NAT_TEST_START = '开始NAT-Type测试，请稍等'
 NAT_TYPE_IS = '当前网络环境下的NAT-Type为：'
 
