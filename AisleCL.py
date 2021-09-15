@@ -24,14 +24,30 @@ def test():
     click.echo(f'{NAT_TYPE_IS} ' + core.getNATType(ifCute=True))
 
 
-@AisleCL.command(help='启动xtcp主机')
-def xtcpHost():
-    pass  # TODO: 添加自动启动xtcp的CL入口
+@AisleCL.command(help='使用XTCP作为主机')
+@click.option('--server', default='gate.oar-0.site:8080')
+@click.option('--token', default='ONLY_FOR_TEST')
+@click.option('--localPort', default='25565')
+@click.argument('password')
+def xtcpHost(server, token, localport, password):
+    core0 = Aisle.Aisle()
+    AisleCode = core0.startXTCPHost(serverAddr=server, token=token, sk=password, localPort=localport)
+    click.echo(f'本次联机码为： {AisleCode}')
+    click.echo('联机码是访问您电脑的唯一凭证，请妥善保管')
+    while 1:
+        pass
 
 
-@AisleCL.command(help='启动xtcp主机')
-def xtcpVisitors():
-    pass  # TODO: 添加自动启动xtcp的CL入口
+@AisleCL.command(help='使用分享码加入别的主机')
+@click.option('--server', default='gate.oar-0.site:8080')
+@click.option('--token', default='ONLY_FOR_TEST')
+@click.option('--localPort', default='25565')
+@click.argument('AisleCode')
+def join(server, token, localport, aislecode):
+    core0 = Aisle.Aisle()
+    core0.joinAisleCode(serverAddr=server, token=token, AisleCode=aislecode, localPort=localport)
+    while 1:
+        pass
 
 
 if __name__ == '__main__':
