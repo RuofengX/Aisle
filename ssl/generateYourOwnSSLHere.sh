@@ -1,3 +1,4 @@
+# see also https://gofrp.org/docs/features/common/network/network-tls/
 cat > my-openssl.cnf << EOF
 [ ca ]
 default_ca = CA_default

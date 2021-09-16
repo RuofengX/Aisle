@@ -1,0 +1,23 @@
+[ ca ]
+default_ca = CA_default
+[ CA_default ]
+x509_extensions = usr_cert
+[ req ]
+default_bits        = 2048
+default_md          = sha256
+default_keyfile     = privkey.pem
+distinguished_name  = req_distinguished_name
+attributes          = req_attributes
+x509_extensions     = v3_ca
+string_mask         = utf8only
+[ req_distinguished_name ]
+[ req_attributes ]
+[ usr_cert ]
+basicConstraints       = CA:FALSE
+nsComment              = "OpenSSL Generated Certificate"
+subjectKeyIdentifier   = hash
+authorityKeyIdentifier = keyid,issuer
+[ v3_ca ]
+subjectKeyIdentifier   = hash
+authorityKeyIdentifier = keyid:always,issuer
+basicConstraints       = CA:true
