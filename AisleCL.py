@@ -1,4 +1,4 @@
-#  Aisle的命令行程序
+#  Aisle的命令行程序，默认和OAR的服务器通信
 import Aisle
 import click
 from config import *
@@ -25,13 +25,14 @@ def test():
 
 
 @AisleCL.command(help='使用XTCP作为主机')
-@click.option('--server', default='gate.oar-0.site:8080')
+@click.option('--server_ip', default='gate.oar-0.site')
+@click.option('--server_port', default='8080')
 @click.option('--token', default='ONLY_FOR_TEST')
-@click.option('--localPort', default='25565')
-@click.argument('password')
-def xtcpHost(server, token, localport, password):
+@click.option('--local_port', default='25565')
+@click.option('--secret_key', default='')
+def xtcpHost(server_ip, server_port, token, local_port, secret_key):
     core0 = Aisle.Aisle()
-    AisleCode = core0.startXTCPHost(serverAddr=server, token=token, sk=password, localPort=localport)
+    AisleCode = core0.startXTCPHost(serverIP=server_ip, serverPort=server_port, token=token, sk=secret_key, localPort=local_port)
     click.echo(f'本次联机码为： {AisleCode}')
     click.echo('联机码是访问您电脑的唯一凭证，请妥善保管')
     while 1:
@@ -45,7 +46,7 @@ def xtcpHost(server, token, localport, password):
 @click.argument('AisleCode')
 def join(server, token, localport, aislecode):
     core0 = Aisle.Aisle()
-    core0.joinAisleCode(serverAddr=server, token=token, AisleCode=aislecode, localPort=localport)
+    core0.joinAisleCode(code=aislecode, localPort=localport)
     while 1:
         pass
 
