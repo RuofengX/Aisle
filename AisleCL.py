@@ -32,7 +32,8 @@ def test():
 @click.option('--secret_key', default='')
 def xtcpHost(server_ip, server_port, token, local_port, secret_key):
     core0 = Aisle.Aisle()
-    AisleCode = core0.startXTCPHost(serverIP=server_ip, serverPort=server_port, token=token, sk=secret_key, localPort=local_port)
+    AisleCode = core0.startXTCPHost(serverIP=server_ip, serverPort=server_port, token=token, sk=secret_key,
+                                    localPort=local_port)
     click.echo(f'本次联机码为： {AisleCode}')
     click.echo('联机码是访问您电脑的唯一凭证，请妥善保管')
     while 1:
@@ -40,11 +41,9 @@ def xtcpHost(server_ip, server_port, token, local_port, secret_key):
 
 
 @AisleCL.command(help='使用分享码加入别的主机')
-@click.option('--server', default='gate.oar-0.site:8080')
-@click.option('--token', default='ONLY_FOR_TEST')
 @click.option('--localPort', default='25565')
 @click.argument('AisleCode')
-def join(server, token, localport, aislecode):
+def join(localport, aislecode):
     core0 = Aisle.Aisle()
     core0.joinAisleCode(code=aislecode, localPort=localport)
     while 1:

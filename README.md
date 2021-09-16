@@ -52,6 +52,7 @@ OAR的公网服务器为AisleCL默认连接的服务器。Aisle项目欢迎有�
 
 ### 参与开发
 Aisle项目是本人(RuofengX)的第一个真正意义上的Python开源项目，其目的是让最广大的人民群众以最便捷的方式获得联机能力，降低各类先进网络工具的使用门槛。  
+请使用Python3.9进行开发和编译，已知在Python3.7版本中析构函数__del__()不会正确地被调用。  
 主要文件有：
 - Aisle.py  python库文件，提供调用各种工具的方法
 - AisleCL.py  一个命令行工具，以CLI的方式呈现Aisle库的功能，可直接使用pyinstaller编译
