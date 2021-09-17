@@ -139,4 +139,7 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
-share.aislecode
+
+# 自定义忽略
+*.aislecode
+private
