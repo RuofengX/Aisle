@@ -6,6 +6,8 @@
       <excludeFolder url="file://$MODULE_DIR$/build" />
       <excludeFolder url="file://$MODULE_DIR$/dist" />
       <excludeFolder url="file://$MODULE_DIR$/bin" />
+      <excludeFolder url="file://$MODULE_DIR$/private/ssl" />
+      <excludeFolder url="file://$MODULE_DIR$/private" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.9 (OAR Aisle)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />

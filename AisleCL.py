@@ -25,27 +25,46 @@ def test():
 
 
 @AisleCL.command(help='使用XTCP作为主机')
-@click.option('--server_ip', default='gate.oar-0.site')
-@click.option('--server_port', default='8080')
-@click.option('--token', default='ONLY_FOR_TEST')
+@click.option('--server_ip', default=SERVER_IP)
+@click.option('--server_port', default=SERVER_PORT)
+@click.option('--token', default=TOKEN)
 @click.option('--local_port', default='25565')
 @click.option('--secret_key', default='')
-def xtcpHost(server_ip, server_port, token, local_port, secret_key):
+def start_xtcp(server_ip, server_port, token, local_port, secret_key):
     core0 = Aisle.Aisle()
     AisleCode = core0.startXTCPHost(serverIP=server_ip, serverPort=server_port, token=token, sk=secret_key,
-                                    localPort=local_port)
+                                    localPort=local_port, tls=True)
     click.echo(f'本次联机码为： {AisleCode}')
     click.echo('联机码是访问您电脑的唯一凭证，请妥善保管')
     while 1:
         pass
 
 
+@AisleCL.command(help='使用STCP作为主机')
+@click.option('--server_ip', default=SERVER_DOMAIN)
+@click.option('--server_port', default=SERVER_PORT)
+@click.option('--token', default=TOKEN)
+@click.option('--local_port', default='25565')
+@click.option('--secret_key', default='')
+def start_stcp(server_ip, server_port, token, local_port, secret_key):
+    core0 = Aisle.Aisle()
+    AisleCode = core0.startSTCPHost(serverIP=server_ip, serverPort=server_port, token=token, sk=secret_key,
+                                    localPort=local_port, tls=True)
+    click.echo(f'本次联机码为： {AisleCode}')
+    click.echo('联机码是访问您电脑的唯一凭证，请妥善保管')
+    while 1:
+        pass
+    # TODO 添加鉴权机制，适当对流量转发收费
+
+
 @AisleCL.command(help='使用分享码加入别的主机')
 @click.option('--localPort', default='25565')
+@click.option('--token', default=TOKEN)
 @click.argument('AisleCode')
-def join(localport, aislecode):
+def join(localport, aislecode, token):
     core0 = Aisle.Aisle()
-    core0.joinAisleCode(code=aislecode, localPort=localport)
+    print(TOKEN)
+    core0.joinAisleCode(_code=aislecode, localPort=localport, _token=token, tls=True)
     while 1:
         pass
 

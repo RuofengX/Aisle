@@ -1,5 +1,19 @@
-# 导入私有配置
-from private import config as private
+# config.py将被编译到二进制代码中，但会被版本控制同步，请不要存放敏感数据
+import dns.resolver
+import os.path
+
+# -------导入不被版本控制追踪的敏感配置-------
+if os.path.exists('private'):
+    # 导入私有配置，敏感配置请放入private文件夹中的config.py，
+    # 并保持版本控制对private文件夹的忽略
+    import private.config as private
+
+else:
+    # 抽象全局变量占位，需根据private/config.py中的定义动态调整
+    # 不进行服务端的设置，程序很可能会出错
+    TOKEN = None
+    SERVER_DOMAIN = None
+    SERVER_PORT = None
 
 # -------AisleCL配置-------
 # 多语言消息实现 | i18n Message
@@ -13,16 +27,17 @@ NAT_HELP = '家庭宽带如抽卡。家宽品质越高，网络连接越容易�
 # OAR服务器的私有配置
 TOKEN = private.TOKEN
 SERVER_DOMAIN = private.SERVER_DOMAIN
+_rrset = dns.resolver.resolve(SERVER_DOMAIN, rdtype='A', raise_on_no_answer=False).rrset
+SERVER_IP = str(_rrset).split(' ')[4]
 SERVER_PORT = private.SERVER_PORT
 
 # -------Aisle配置-------
-VERSION = 'DEV WORK_IN_PROGRESS'
-FRP_VERSION = '0.37.1'
-TEMP_DIR = './temp'  # 临时文件夹
-TLS_DIR = './private/ssl/'  # 处理ssl相关
+VERSION = 'PRE V1.0.0'
+FRP_VERSION = '0.37.1'  # FRP版本
+TEMP_DIR = './temp'  # 临时文件夹路径
+TLS_DIR = './private/ssl/'  # ssl证书文件夹路径
 UID_LENGTH = 5  # uid长度
 
 # -------DEBUG区域-------
-LOG_LEVEL = 'DEBUG'  # in ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET']
-NO_DEL_TEMP = False  # 启用后将关闭
-
+LOG_LEVEL = 'INFO'  # in ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET']
+NO_DEL_TEMP = False  # 启用后：临时文件夹的文件将不会删除，以供程序运行结束后查看

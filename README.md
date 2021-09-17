@@ -30,17 +30,17 @@ Aisle网络模型中有一个公网服务器(Server)、一个主机(Host)也就�
 Aisle通过frp等上游工具在用户本地建立一个和公网服务器(Server)的通信，并且将相关参数生成为联机码(AisleCode)
 ，其他玩家(Visitor)在Aisle中输入联机码(AisleCode)来加入主机(Host)的游戏。  
 如果连接顺利，主机(Host)的游戏端口(port)（可自定义，默认为Minecraft的25565）将映射在每一个玩家(Visitor)的本地端口
-，玩家加入那一个绑定的本地端口即可开始游玩。  
+，玩家加入那一个绑定的本地端口即可开始游玩。
+
 ### 联机码(AisleCode)
 联机码为格式形如URL的一串字符串，使用:和//作为分隔符，其中敏感部分均使用Base64“打码”，防止语义层面的隐私数据泄露。  
 一个标准的联机码如下：
 
-> XTCP://Z2F0ZS5vYXItMC5zaXRlOjgwODA=/T05MWV9GT1JfVEVTVA==/ODA1RTA=  
+> XTCP://Z2F0ZS5vYXItMC5zaXRlOjgwODA=/ODA1RTA=
 
 以://和/作为分隔符，各部分功能如下：
 - XTCP 模式名称
-- Z2F0Z... 公网服务器相关信息
-- T05MW... 公网服务器认证token
+- Z2F0Z... 公网服务器相关信息（不包含鉴权Token）
 - ODA1R... 主机所建立的代理的连接信息
 
 在提供费用敏感业务（例如反向代理）时，可利用frp服务端的“限制客户端建立的代理名称”，只有**特定的代理名称**(aka.SN)才可以建立。  
@@ -48,8 +48,7 @@ Aisle通过frp等上游工具在用户本地建立一个和公网服务器(Serve
 
 ### OAR Aisle项目和连接安全
 OAR Aisle是一个由作者本人运行维护的Aisle公网服务器项目。以最高等级的安全提供Aisle的服务。也是AisleCL默认连接的服务器。
-OAR Aisle的公网服务器使用专门的ca单向认证客户端身份，ca证书和任何私钥均不公开，防止未经许可的用户加入Aisle网络。
-目前，使用项目根文件夹中的example-frps.ini，在公网服务器上启动frps服务端即可满足需求。
+OAR Aisle的公网服务器使用密钥进行鉴权，防止未经许可的用户加入Aisle网络。鉴权码暂时保存在AisleCL编译后的二进制文件中。
 
 ### 搭建私人中转服务器
 Aisle项目欢迎有能力的游戏玩家在自己的服务器上部署Aisle的服务端。
