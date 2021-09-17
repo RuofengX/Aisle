@@ -1,3 +1,6 @@
+mkdir ./private/ssl
+# shellcheck disable=SC2164
+cd ./private/ssl
 cat > my-openssl.cnf << EOF
 [ ca ]
 default_ca = CA_default

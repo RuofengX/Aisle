@@ -10,9 +10,11 @@ from subprocess import Popen, PIPE, STDOUT
 import chardet
 import shortuuid
 from socket import gethostname
-import _thread as thread
 from base64 import b64encode, b64decode
 from time import sleep
+import multiprocessing
+import warnings
+import json
 
 # logging相关配置
 logging.basicConfig(
@@ -60,14 +62,14 @@ class Aisle(AisleDefault):  # 核心控制类，对应vps/用户电脑
         self.logger.info('初始化Aisle...')
         self.NATType = ''
         self.localIP = socket.gethostbyname(socket.gethostname())
-        self.clientModule = {}  # 存储各个模块的实例的字典  # TODO:
-        self.clientHandler = {}  # 存储各个模块的线程实例的字典  # TODO:
-
+        self.clientModuleInstance = {}
+        self.CMIShare = multiprocessing.Manager().dict()
+        self.CMIHandler = {}  # 存储各个模块的线程实例的字典
         self.logger.info('初始化完成')
 
     def __del__(self):
-        for handler in self.clientModule.values():
-            del handler
+        for _ in self.clientModuleInstance.values():
+            del _
 
     def getNATType(self, ifCute=False):
         self.NATType = NATTypeDetector.test()[0]  # 进行一次NAT测试
@@ -80,18 +82,18 @@ class Aisle(AisleDefault):  # 核心控制类，对应vps/用户电脑
         else:
             return self.NATType
 
-    def __phaseAisleCode(self, code: str):
+    def __phaseAisleCode(self, _code: str):
         """
         将AisleCode联机码转换为各个参数
-        :param code: AisleCode
+        :param _code: AisleCode
         :return: 参数均为字符串,所有B64编码在此已解码
         """
-        mode, _rest = code.split('://', maxsplit=1)
+        mode, _rest = _code.split('://', maxsplit=1)
         serverInfo, _rest = _rest.split('/', 1)
         token, _rest = _rest.split('/', 1)
         if '/' in _rest:
             payload = _rest.split('/')[0]
-            self.logger.error(f'超出预期的联机码，联机码可能有错误 {code} ，超出预期的部分：/{_rest}')
+            self.logger.error(f'超出预期的联机码，联机码可能有错误 {_code} ，超出预期的部分：/{_rest}')
         else:
             payload = _rest
 
@@ -107,48 +109,75 @@ class Aisle(AisleDefault):  # 核心控制类，对应vps/用户电脑
 
         return mode, serverIP, port, token, payload
 
-    def joinAisleCode(self, code, localPort):
+    def joinAisleCode(self, _code, localPort):
         """
 
-        :param code: 联机码，形如： ProtocolName://(B64_ServerInfo)/(B64_ServerToken)/(B64_Payload)
+        :param _code: 联机码，形如： ProtocolName://(B64_ServerInfo)/(B64_ServerToken)/(B64_Payload)
         :param localPort:  指定Aisle所绑定的远程服务到本地的端口
         :return: 直接尝试加入服务器，无返回值
         """
 
-        mode, serverIP, port, token, payload = self.__phaseAisleCode(code)
-        if mode == 'XTCP':
-            self.xtcp = XTCP(serverIP=serverIP, serverPort=port, token=token)
-            thread.start_new_thread(self.xtcp.startVisitor, (payload, localPort, self.localIP))
-        elif mode == 'STCP':
-            self.stcp = STCP(serverIP=serverIP, serverPort=port, token=token)
-            thread.start_new_thread(self.stcp.startVisitor, (payload, localPort, self.localIP))
+        _mode, _serverIP, _port, _token, _payload = self.__phaseAisleCode(_code)
+        if _mode == 'XTCP':
+            self.clientModuleInstance['XTCP'] = XTCP(serverIP=_serverIP, serverPort=_port, token=_token)
+            self.CMIHandler['XTCPHost'] = multiprocessing.Process(
+                target=self.clientModuleInstance['XTCP'].startVisitor,
+                args=(_payload, localPort, self.localIP, self.CMIShare)
+            )
+            self.CMIHandler[_mode].start()
+        elif _mode == 'STCP':
+            self.clientModuleInstance['STCP'] = STCP(serverIP=_serverIP, serverPort=_port, token=_token)
+            self.CMIHandler['STCPHost'] = multiprocessing.Process(
+                target=self.clientModuleInstance['STCP'].startVisitor,
+                args=(_payload, localPort, self.localIP, self.CMIShare)
+            )
 
     def startXTCPHost(self, serverIP, serverPort, token, sk, localPort):
-        _mode = 'stcp'
-        self.clientModule[_mode] = XTCP(serverIP=serverIP, serverPort=serverPort, token=token)
-        self.clientHandler[_mode] = thread.start_new_thread(self.clientModule['xtcp'].startHost, (sk, localPort))  # 实用新线程启动外部程序  # TODO:需要改进
-        # TODO:实例线程阻塞时删除实例导致__del__无法被触发，考虑添加结束函数手动处理
-        sleep(1)
-        return self.xtcp.generateAisleCode()  # 返回联机码的Payload
+        _mode = 'XTCP'
+        self.clientModuleInstance[_mode] = XTCP(serverIP=serverIP, serverPort=serverPort, token=token)
+
+        self.CMIHandler[_mode] = multiprocessing.Process(
+            target=self.clientModuleInstance[_mode].startHost,
+            args=(sk, localPort)
+        )
+
+        self.logger.debug('XTCP进程开始')
+        self.CMIHandler[_mode].start()
+        return self.clientModuleInstance[_mode].generateAisleCode()  # 返回联机码的Payload
 
     def startSTCPHost(self, serverIP, serverPort, token, sk, localPort):
-        self.clientModule['stcp'] = STCP(serverIP=serverIP, serverPort=serverPort, token=token)
-        thread.start_new_thread(self.clientModule['stcp'].startHost, (sk, localPort))  # 实用新线程启动外部程序  # TODO:需要改进
-        # TODO:实例线程阻塞时删除实例导致__del__无法被触发，考虑添加结束函数手动处理，同样这里也是
-        sleep(1)
-        return self.stcp.generateAisleCode()  # 返回联机码的Payload
+        _mode = 'STCP'
+        self.clientModuleInstance[_mode] = STCP(serverIP=serverIP, serverPort=serverPort, token=token)
+        self.CMIHandler[_mode] = multiprocessing.Process(target=self.clientModuleInstance[_mode].startHost,
+                                                         args=(sk, localPort))  # 用multiprocess，析构函数正常触发
+        self.CMIHandler[_mode].start()
+        sleep(5)
+        return self.clientModuleInstance[_mode].generateAisleCode()  # 返回联机码的Payload
 
 
 class AisleClientModuleMixin(AisleDefault):
     def __init__(self, serverIP, serverPort, token):
         AisleDefault.__init__(self)
+        self.stopFlag = False  # 中止外部进程标志
         self.mode = ''
         self.serverIP = serverIP
         self.serverPort = serverPort
         self.token = token
         self.payload = ''
+        self.AisleCodePath = 'share.aislecode'
+        self.logger.debug(f'将code写入：{self.AisleCodePath}')
+
+    def makeAisleCode(self):
+        with open(self.AisleCodePath, mode='w', encoding='utf-8') as f:
+            self.logger.debug(self._generateAisleCode())
+            f.write(self._generateAisleCode())
 
     def generateAisleCode(self):
+        with open(self.AisleCodePath, mode='r', encoding='utf-8') as f:
+            _ = f.readlines()
+        return _
+
+    def _generateAisleCode(self):
         """
         所有的Client模块都要有生成AisleCode的功能，都要有self.payload
         :return: AisleCode联机码
@@ -168,8 +197,8 @@ class AisleClientModuleMixin(AisleDefault):
         if self.payload == '':
             self.logger.warning('模块提供了一个空的payload')
         Payload = encodeB64String(self.payload)
+        Payload = encodeB64String(Payload)
         code += Payload
-
         return code
 
 
@@ -280,14 +309,7 @@ class FrpClient(AisleClientModuleMixin, FrpCtl):  # 所有Client和一个Server�
         else:
             self.logger.error(f'没有找到对应的frpc软件，frp将无法启动，请联系开发者以获取帮助。'
                               f'使用二进制文件{self.binPath}')
-        '''
-        # 抛弃命令行模式
-        self.startArgs = {
-            **self.startArgs,
-            '--server_addr': serverIP + ':' + serverPort,
-            '--token': token
-        }
-        '''
+
         # 使用config字典存储
         self.config['common']['server_addr'] = serverIP
         self.config['common']['server_port'] = serverPort
@@ -296,21 +318,24 @@ class FrpClient(AisleClientModuleMixin, FrpCtl):  # 所有Client和一个Server�
         self.logger.info('初始化frp完成')
 
     def __del__(self):
-        self.logger.debug('析构函数开始运行')
+        self.logger.debug('FrpCtl析构函数开始运行')
         FrpCtl.__del__(self)  # 继承FrpCtl的析构函数
+
         if self.handler:
             self.handler.terminate()
-            self.logger.debug('结束外部进程')
 
     def startSubprocess(self):
+        self.logger.debug('FrpClient启动子进程')
         if self.handler is None:
             pass
         else:
-            self.logger.error('存在已经实例化的外部进程，请不要用同一个frp实例创建多个外部进程！')
-            return -1
+            self.logger.warning('同一个实例存在已经实例化的外部进程，将要关闭。请不要用同一个frp实例创建多个外部进程！')
+            self.handler.terminate()
 
         self.logger.info('启动frpc外部进程')
-        self.writeConf()  # 将配置写入文档
+        self.writeConf()  # 将配置写入文件
+        self.makeAisleCode()  # 将分享码写入文件
+
         _args = [self.binPath, '-c', self.configFilePath]
         self.logger.debug(f'_args: {_args}')
 
@@ -326,8 +351,15 @@ class FrpClient(AisleClientModuleMixin, FrpCtl):  # 所有Client和一个Server�
             shell=True,
             stderr=STDOUT
         )
-        with self.handler.stdout:
+        with self.handler.stdout as _pipe:
+
+            _codec = chardet.detect(self.handler.stdout.readline(100))['encoding']  # 获取编码方式
             logSubprocessOutput(self.handler.stdout, self.logger)
+            logging.debug(f'PIPE开头：{self.handler.stdout.readline()}')
+            for line in iter(_pipe.readline, b''):
+                line = line.decode(_codec).replace('\n', '')  # 删去行末的/n，logging自动会换行
+                self.logger.info(line)
+
         self.logger.critical('frp外部进程结束')
 
 
@@ -340,8 +372,8 @@ class XTCP(FrpClient):
 
     @classmethod
     def generatePayload(cls, uid: str, sk: str):
-        payload = uid + sk
-        return payload
+        _payload = uid + sk
+        return _payload
 
     @classmethod
     def phasePayload(cls, payload):
@@ -362,16 +394,6 @@ class XTCP(FrpClient):
 
         self.uid = shortuuid.ShortUUID(alphabet="0123456789ABCDEF").random(UID_LENGTH)
 
-        '''
-        # 抛弃
-        self.startArgs = {
-            **self.startArgs,
-            '--role': 'server',
-            '--local_ip': localIP,
-            '--local_port': localPort,
-            '--proxy_name': self.uid
-        }
-        '''
         self.config['proxy'][self.uid] = {
             'type': self.mode.lower(),  # 配置文件中小写mode
             'role': 'server',
@@ -396,7 +418,9 @@ class XTCP(FrpClient):
         self.logger.debug(f'启动参数 {self.config}')
 
         # 启动前生成XTCPCode
+        self.logger.debug('生成了payload：' + self.payload)
         self.payload = self.generatePayload(uid=self.uid, sk=sk)
+        self.logger.debug(self.payload)
 
         # 启动外部进程
         self.startSubprocess()
@@ -450,11 +474,12 @@ class STCP(FrpClient):
         sk = payload[UID_LENGTH:]
         return uid, sk
 
-    def startHost(self, sk, localPort, localIP='127.0.0.1'):
+    def startHost(self, sk, localPort, shareDict, localIP='127.0.0.1'):
         """
         :param self:
         :param sk: 可选自定义密码
         :param localPort: 绑定的本地链接
+        :param shareDict: 来自上游的共享字典，存入self.payload
         :param localIP: 本机IP， 后备选项为127.0.0.1
         :return: 无返回值即代表正常运行，返回0代表外部进程结束，但是要保证实例在启动之后，self.payload为有效的分享码的payload
         """
@@ -481,6 +506,7 @@ class STCP(FrpClient):
 
         # 启动前生成XTCPCode
         self.payload = self.generatePayload(uid=self.uid, sk=sk)
+        shareDict[self.mode]['payload'] = self.payload
 
         # 启动外部进程
         self.startSubprocess()
@@ -505,8 +531,9 @@ class STCP(FrpClient):
 
 
 if __name__ == '__main__':
-    core = Aisle()
-    # code = core.startXTCPHost(serverIP=SERVER_DOMAIN, serverPort=SERVER_PORT, token='ONLY_FOR_TEST', localPort='25565', sk='0')
-    core.joinAisleCode(code='STCP://Z2F0ZS5vYXItMC5zaXRlOjgwODA=/T05MWV9GT1JfVEVTVA==/QTNENjIw', localPort='25565')
-    while 1:
-        pass
+    core0 = Aisle()
+    code0 = core0.startXTCPHost(serverIP=SERVER_DOMAIN, serverPort=SERVER_PORT, token='ONLY_FOR_TEST',
+                                localPort='25565', sk='0')
+    print(code0)
+    # del core0
+    # core.joinAisleCode(code='STCP://Z2F0ZS5vYXItMC5zaXRlOjgwODA=/T05MWV9GT1JfVEVTVA==/QTNENjIw', localPort='25565')
