@@ -211,9 +211,11 @@ class AisleClientModuleMixin(AisleDefault):
 
         if self.payload == '':
             self.logger.warning('模块提供了一个空的payload')
+
         Payload = encodeB64String(self.payload)
-        Payload = encodeB64String(Payload)
+        self.logger.debug(f'生成payload{Payload}')
         code += Payload
+        self.logger.debug(f'返回code{code}')
         return code
 
 
