@@ -1,4 +1,5 @@
 # Aisle的核心,需要同级目录下的bin文件夹以正常启动对应模块
+import shutil
 import socket
 from time import sleep
 from config import *
@@ -287,6 +288,7 @@ class FrpCtl(AisleDefault):  # 用来创建、控制单个frp进程的类，
                 if not NO_DEL_TEMP:
                     self.logger.warning(f'删除临时配置文件')
                     os.remove(self.configFilePath)
+                    shutil.rmtree(TEMP_DIR)
 
     @staticmethod
     def _phaseDirPath(path):
@@ -432,6 +434,7 @@ class FrpClient(AisleClientModuleMixin, FrpCtl):  # 所有Client和一个Server�
         sleep(1)  # 等待frpc1秒钟
         self.logger.debug(f'删除临时配置文件')
         os.remove(self.configFilePath)
+        shutil.rmtree(TEMP_DIR)
 
         with self.handler.stdout as _pipe:
 
