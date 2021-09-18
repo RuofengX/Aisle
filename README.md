@@ -1,5 +1,3 @@
-# OAR_Aisle
-
 ![Aisle](img/Aisle-title.jpg)
 
 OAR Aisle 是一个面向用户、便于分享的多人游戏联机工具
@@ -71,7 +69,7 @@ Aisle项目是本人(RuofengX)的第一个真正意义上的Python开源项目�
 
 - 网络环境评级  
 - 生成和解析AisleCode联机码
-- 使用frp的xtcp模式提供一主多从的特定端口“共享”功能（需要测试）
+- 使用frp的xtcp模式提供一主多从的特定端口“共享”功能）
+- 添加STCP模式，利用服务器中转流量
 
 ## TODO
-- 添加STCP模式，利用服务器中转流量
