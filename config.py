@@ -25,6 +25,7 @@ TEMP_DIR = './temp'  # 临时文件夹路径
 TLS_DIR = './ssl/'  # ssl证书文件夹路径
 UID_LENGTH = 5  # uid长度
 
+
 # -------DEBUG区域-------
 LOG_LEVEL = 'INFO'  # in ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET']
 NO_DEL_TEMP = False  # 启用后：临时文件夹的文件将不会删除，以供程序运行结束后查看
