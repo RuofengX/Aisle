@@ -52,7 +52,7 @@ SERVER_IP = str(_rrset).split(' ')[4]
 SERVER_PORT = private.SERVER_PORT
 
 # -------Aisle配置-------
-VERSION = 'PRE V1.2.2'
+VERSION = 'PRE V1.2.3'
 LOG.info(f'版本号{VERSION}')
 FRP_VERSION = '0.37.1'  # 兼容的FRP版本
 TEMP_DIR_ROOT = './temp'

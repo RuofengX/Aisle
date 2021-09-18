@@ -1,4 +1,5 @@
 #  Aisle的命令行程序，默认和OAR的服务器通信
+import logging
 
 import Aisle
 import click
@@ -127,12 +128,16 @@ def start_stcp(server_ip, server_port, token, local_port, secret_key):
 @click.option('--aislecode', default='')
 def join(localport, aislecode, token):
     if aislecode == '':
-        input('请在这里输入或粘贴联机码，回车键结束')
-
+        aislecode = input('请在这里输入或粘贴联机码，回车键结束\n')
+        aislecode.strip()  # 必须删除两端空格
     hd = AisleHandler()
-    hd.join(_code=aislecode, token=token, local_port=localport)
-    LOG.debug(f'开始阻塞')
-    hd.hold()
+    try:
+        hd.join(_code=aislecode, token=token, local_port=localport)
+        LOG.debug(f'开始阻塞')
+        hd.hold()
+    except Exception as exp:
+        LOG.critical(f'发生{exp}错误')
+    click.echo('进程结束')
 
 
 if __name__ == '__main__':

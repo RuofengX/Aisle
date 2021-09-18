@@ -109,8 +109,12 @@ class Aisle(AisleDefault, object):  # 核心控制类，对应vps/用户电脑
         :param tls: None | tls加密文件目录
         :return: 直接尝试加入服务器，无返回值
         """
+        try:
+            _mode, _serverIP, _port, _payload = self.__phaseAisleCode(_code)
+        except ValueError:
+            self.logger.critical(f'无法识别的联机码：{_code}')  # 错误处理
+            return
 
-        _mode, _serverIP, _port, _payload = self.__phaseAisleCode(_code)
         self.logger.debug(f'信息：{_mode}, {_serverIP}, {_port}, {_payload}')
         if _mode == 'XTCP':
             self.clientModuleInstance[_mode] = XTCP(serverIP=_serverIP, serverPort=_port, token=_token, tls=tls)
@@ -137,6 +141,8 @@ class Aisle(AisleDefault, object):  # 核心控制类，对应vps/用户电脑
                 self.clientModuleInstance[_mode].startVisitor,
                 (_payload, localPort, self.localIP)
             )
+        else:
+            self.logger.error(f'未兼容的协议{_mode}，Aisle版本{VERSION}')
 
     def startXTCPHost(self, serverIP, serverPort, token, sk, localPort, tls):
         _mode = 'XTCP'
