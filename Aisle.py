@@ -37,11 +37,10 @@ def encodeB64String(raw: str):
 
 
 # 使用logging记录subprocess的输出，来自 https://stackoverflow.com/questions/21953835/run-subprocess-and-print-output-to-logging
-def logSubprocessOutput(pipe, logger):
-    codec = chardet.detect(pipe.readline(100))['encoding']  # 获取编码方式
+def logSubprocessOutput(pipe, logger, _codec):
     logging.debug(f'PIPE开头：{pipe.readline()}')
     for line in iter(pipe.readline, b''):
-        line = line.decode(codec).replace('\n', '')  # 删去行末的/n，logging自动会换行
+        line = line.decode(_codec).replace('\n', '')  # 删去行末的/n，logging自动会换行
         logger.info(line)
 
 
@@ -406,6 +405,7 @@ class FrpClient(AisleClientModuleMixin, FrpCtl):  # 所有Client和一个Server�
         _args = [self.binPath, '-c', self.configFilePath]
         self.logger.debug(f'_args: {_args}')
 
+        # 显示魔法代码
         if LOG_LEVEL == 'DEBUG':
             _magicString = ''
             for i in _args:
@@ -413,22 +413,26 @@ class FrpClient(AisleClientModuleMixin, FrpCtl):  # 所有Client和一个Server�
             self.logger.debug(f'魔法代码：{_magicString}')
 
         self.logger.info('frp外部进程开始')
+
+        # TODO 似乎在Linux不工作
         self.handler = Popen(
             args=_args,
             stdout=PIPE,
             shell=True,
             stderr=STDOUT
         )
+
         with self.handler.stdout as _pipe:
 
-            _codec = chardet.detect(self.handler.stdout.readline(100))['encoding']  # 获取编码方式
-            logSubprocessOutput(self.handler.stdout, self.logger)
-            logging.debug(f'PIPE开头：{self.handler.stdout.readline()}')
+            _codec = chardet.detect(_pipe.readline(24))['encoding']  # 获取编码方式
+            self.logger.debug(f'检测的代码为{_codec}')
+            logSubprocessOutput(_pipe, self.logger, _codec=_codec)
+
             for line in iter(_pipe.readline, b''):
                 line = line.decode(_codec).replace('\n', '')  # 删去行末的/n，logging自动会换行
                 self.logger.info(line)
 
-        self.logger.critical('frp外部进程结束')
+        self.logger.critical('!!!frp外部进程结束!!!')
 
 
 class XTCP(FrpClient):

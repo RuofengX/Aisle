@@ -24,6 +24,7 @@ FRP_VERSION = '0.37.1'  # 兼容的FRP版本
 TEMP_DIR = './temp'  # 临时文件夹路径
 TLS_DIR = './ssl/'  # ssl证书文件夹路径
 UID_LENGTH = 5  # uid长度
+DEFAULT_CODEC = 'gbk'
 
 
 # -------DEBUG区域-------
