@@ -2,3 +2,4 @@ chardet~=4.0.0
 shortuuid~=1.0.1
 click~=8.0.1
 dnspython~=2.1.0
+pyinstaller~=4.5.1

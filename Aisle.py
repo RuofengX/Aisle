@@ -1,4 +1,4 @@
-# Aisle的核心
+# Aisle的核心,需要同级目录下的bin文件夹以正常启动对应模块
 import socket
 from time import sleep
 from config import *

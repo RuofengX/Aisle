@@ -1,19 +1,6 @@
 # config.py将被编译到二进制代码中，但会被版本控制同步，请不要存放敏感数据
 import dns.resolver
-import os.path
-
-# -------导入不被版本控制追踪的敏感配置-------
-if os.path.exists('private'):
-    # 导入私有配置，敏感配置请放入private文件夹中的config.py，
-    # 并保持版本控制对private文件夹的忽略
-    import private.config as private
-
-else:
-    # 抽象全局变量占位，需根据private/config.py中的定义动态调整
-    # 不进行服务端的设置，程序很可能会出错
-    TOKEN = None
-    SERVER_DOMAIN = None
-    SERVER_PORT = None
+import private  # 模块化的私有参数才能让pyinstaller识别
 
 # -------AisleCL配置-------
 # 多语言消息实现 | i18n Message
@@ -33,7 +20,7 @@ SERVER_PORT = private.SERVER_PORT
 
 # -------Aisle配置-------
 VERSION = 'PRE V1.0.0'
-FRP_VERSION = '0.37.1'  # FRP版本
+FRP_VERSION = '0.37.1'  # 兼容的FRP版本
 TEMP_DIR = './temp'  # 临时文件夹路径
 TLS_DIR = './private/ssl/'  # ssl证书文件夹路径
 UID_LENGTH = 5  # uid长度

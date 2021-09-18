@@ -36,7 +36,7 @@ Aisle通过frp等上游工具在用户本地建立一个和公网服务器(Serve
 联机码为格式形如URL的一串字符串，使用:和//作为分隔符，其中敏感部分均使用Base64“打码”，防止语义层面的隐私数据泄露。  
 一个标准的联机码如下：
 
-> XTCP://Z2F0ZS5vYXItMC5zaXRlOjgwODA=/ODA1RTA=
+> `XTCP://Z2F0ZS5vYXItMC5zaXRlOjgwODA=/ODA1RTA=`
 
 以://和/作为分隔符，各部分功能如下：
 - XTCP 模式名称
