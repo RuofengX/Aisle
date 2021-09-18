@@ -22,7 +22,7 @@ SERVER_PORT = private.SERVER_PORT
 VERSION = 'PRE V1.0.0'
 FRP_VERSION = '0.37.1'  # 兼容的FRP版本
 TEMP_DIR = './temp'  # 临时文件夹路径
-TLS_DIR = './private/ssl/'  # ssl证书文件夹路径
+TLS_DIR = './ssl/'  # ssl证书文件夹路径
 UID_LENGTH = 5  # uid长度
 
 # -------DEBUG区域-------

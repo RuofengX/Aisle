@@ -143,3 +143,5 @@ cython_debug/
 # 自定义忽略
 *.aislecode
 private
+/ssl/
+
