@@ -27,6 +27,12 @@ class Builder(object):
 
 
 class BuilderOnWindows(Builder):
+    """
+    目前只能在Windows平台编译，见下文：  |  同时Linux平台使用os.fork()也有问题。
+    https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
+    Warning
+    The 'spawn' and 'forkserver' start methods cannot currently be used with “frozen” executables (i.e., binaries produced by packages like PyInstaller and cx_Freeze) on Unix. The 'fork' start method does work.
+    """
     def __init__(self, name, icon):
         super(BuilderOnWindows, self).__init__(name, icon)
 

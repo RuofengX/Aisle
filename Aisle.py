@@ -5,19 +5,12 @@ from config import *
 import NATTypeDetector
 import platform
 import os
-import logging
 from subprocess import Popen, PIPE, STDOUT
 import chardet
 import shortuuid
 from socket import gethostname
 from base64 import b64encode, b64decode
-import multiprocessing
-
-# logging相关配置
-logging.basicConfig(
-    level=LOG_LEVEL,
-    format='%(asctime)s [%(levelname)s] %(name)s(%(funcName)s):\t%(message)s'
-)
+import _thread as thread
 
 
 def decodeB64String(raw: str):
@@ -38,27 +31,21 @@ def encodeB64String(raw: str):
 
 # 使用logging记录subprocess的输出，来自 https://stackoverflow.com/questions/21953835/run-subprocess-and-print-output-to-logging
 def logSubprocessOutput(pipe, logger, _codec):
-    logging.debug(f'PIPE开头：{pipe.readline()}')
+    LOG.debug(f'PIPE开头：{pipe.readline()}')
     for line in iter(pipe.readline, b''):
         line = line.decode(_codec).replace('\n', '')  # 删去行末的/n，logging自动会换行
         logger.info(line)
 
 
-# 自带logger配置
-class AisleDefault(object):
-    def __init__(self):
-        self.logger = logging.getLogger(self.__class__.__name__)
-        self.logger.setLevel(LOG_LEVEL)
-        self.logger.debug('日志功能启动')
-
-
 class Aisle(AisleDefault, object):  # 核心控制类，对应vps/用户电脑
     def __init__(self):
+
         super().__init__()
         self.logger.debug('初始化Aisle...')
 
-        # 详见 https://docs.python.org/3.7/library/multiprocessing.html?highlight=process#multiprocessing.freeze_support
-        multiprocessing.freeze_support()
+        # 抛弃
+        # # 详见 https://docs.python.org/3.7/library/multiprocessing.html?highlight=process#multiprocessing.freeze_support
+        # multiprocessing.freeze_support()
 
         self.NATType = ''
         self.localIP = socket.gethostbyname(socket.gethostname())
@@ -68,7 +55,7 @@ class Aisle(AisleDefault, object):  # 核心控制类，对应vps/用户电脑
 
     def __del__(self):
         for _ in self.clientModuleInstance.values():
-            self.logger.debug(f'删除对象{_}')
+            self.logger.debug(f'删除对象{_.__class__.__name__}, {_}')
             del _
 
     def getNATType(self, ifCute=False):
@@ -104,7 +91,7 @@ class Aisle(AisleDefault, object):  # 核心控制类，对应vps/用户电脑
         serverInfoStr = decodeB64String(serverInfo)
         serverIP, port = serverInfoStr.split(':')
 
-        # 不再处理token部分
+        # 联机码不再包含token部分
         # token = decodeB64String(token)
 
         # 处理payload部分
@@ -126,42 +113,60 @@ class Aisle(AisleDefault, object):  # 核心控制类，对应vps/用户电脑
         self.logger.debug(f'信息：{_mode}, {_serverIP}, {_port}, {_payload}')
         if _mode == 'XTCP':
             self.clientModuleInstance[_mode] = XTCP(serverIP=_serverIP, serverPort=_port, token=_token, tls=tls)
-            self.CMIHandler[_mode] = multiprocessing.Process(
-                target=self.clientModuleInstance['XTCP'].startVisitor,
-                args=(_payload, localPort, self.localIP)
+            # 抛弃
+            # self.CMIHandler[_mode] = multiprocessing.Process(
+            #     target=self.clientModuleInstance['XTCP'].startVisitor,
+            #     args=(_payload, localPort, self.localIP)
+            # )
+            # self.CMIHandler[_mode].start()
+            self.CMIHandler[_mode] = thread.start_new_thread(
+                self.clientModuleInstance[_mode].startVisitor,
+                (_payload, localPort, self.localIP)
             )
-            self.CMIHandler[_mode].start()
+
         elif _mode == 'STCP':
             self.clientModuleInstance[_mode] = STCP(serverIP=_serverIP, serverPort=_port, token=_token, tls=tls)
-            self.CMIHandler[_mode] = multiprocessing.Process(
-                target=self.clientModuleInstance[_mode].startVisitor,
-                args=(_payload, localPort, self.localIP)
+            # 抛弃
+            # self.CMIHandler[_mode] = multiprocessing.Process(
+            #     target=self.clientModuleInstance[_mode].startVisitor,
+            #     args=(_payload, localPort, self.localIP)
+            # )
+            # self.CMIHandler[_mode].start()
+            self.CMIHandler[_mode] = thread.start_new_thread(
+                self.clientModuleInstance[_mode].startVisitor,
+                (_payload, localPort, self.localIP)
             )
-            self.CMIHandler[_mode].start()
 
     def startXTCPHost(self, serverIP, serverPort, token, sk, localPort, tls):
         _mode = 'XTCP'
         self.clientModuleInstance[_mode] = XTCP(serverIP=serverIP, serverPort=serverPort, token=token, tls=tls)
-
-        self.CMIHandler[_mode] = multiprocessing.Process(
-            target=self.clientModuleInstance[_mode].startHost,
-            args=(sk, localPort)
+        self.CMIHandler[_mode] = thread.start_new_thread(
+            self.clientModuleInstance[_mode].startHost,
+            (sk, localPort)
         )
-
+        #
+        # self.CMIHandler[_mode] = multiprocessing.Process(
+        #     target=self.clientModuleInstance[_mode].startHost,
+        #     args=(sk, localPort)
+        # )
+        #
         self.logger.debug('XTCP进程开始')
-        self.CMIHandler[_mode].start()
         sleep(5)
         return self.clientModuleInstance[_mode].generateAisleCode()  # 返回联机码的Payload
 
     def startSTCPHost(self, serverIP, serverPort, token, sk, localPort, tls):
         _mode = 'STCP'
         self.clientModuleInstance[_mode] = STCP(serverIP=serverIP, serverPort=serverPort, token=token, tls=tls)
-        self.CMIHandler[_mode] = multiprocessing.Process(
-            target=self.clientModuleInstance[_mode].startHost,
-            args=(sk, localPort)
-        )  # 用multiprocess，析构函数正常触发
-
-        self.CMIHandler[_mode].start()
+        self.CMIHandler[_mode] = thread.start_new_thread(
+            self.clientModuleInstance[_mode].startHost,
+            (sk, localPort)
+        )
+        # self.CMIHandler[_mode] = multiprocessing.Process(
+        #     target=self.clientModuleInstance[_mode].startHost,
+        #     args=(sk, localPort)
+        # )  # 用multiprocess，析构函数正常触发
+        #
+        self.logger.debug('STCP进程开始')
         sleep(5)  # 等待文件生成
         return self.clientModuleInstance[_mode].generateAisleCode()  # 返回联机码的Payload
 
@@ -422,6 +427,12 @@ class FrpClient(AisleClientModuleMixin, FrpCtl):  # 所有Client和一个Server�
             stderr=STDOUT
         )
 
+        # 临时解决方案：立即删除配置文件,__del__方法在使用_thread或multiprocessing时，貌似不起作用
+        # 关于作者（RuofengX）对frpc的隐私强化建议详见：https://github.com/fatedier/frp/issues/2582
+        sleep(1)  # 等待frpc1秒钟
+        self.logger.debug(f'删除临时配置文件')
+        os.remove(self.configFilePath)
+
         with self.handler.stdout as _pipe:
 
             _codec = chardet.detect(_pipe.readline(24))['encoding']  # 获取编码方式
@@ -432,7 +443,7 @@ class FrpClient(AisleClientModuleMixin, FrpCtl):  # 所有Client和一个Server�
                 line = line.decode(_codec).replace('\n', '')  # 删去行末的/n，logging自动会换行
                 self.logger.info(line)
 
-        self.logger.critical('!!!frp外部进程结束!!!')
+        self.logger.critical('frp外部进程结束')
 
 
 class XTCP(FrpClient):
@@ -521,7 +532,6 @@ class STCP(FrpClient):
     @classmethod
     def generatePayload(cls, uid: str, sk: str):
         payload = uid + sk
-        logging.debug(payload)
         return payload
 
     @classmethod
