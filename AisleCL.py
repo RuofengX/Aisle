@@ -27,7 +27,7 @@ def test():
 @AisleCL.command(help='使用XTCP作为主机')
 @click.option('--server_ip', default=SERVER_IP)
 @click.option('--server_port', default=SERVER_PORT)
-@click.option('--token', default=TOKEN)
+@click.option('--token', default=SERVER_TOKEN)
 @click.option('--local_port', default='25565')
 @click.option('--secret_key', default='')
 def start_xtcp(server_ip, server_port, token, local_port, secret_key):
@@ -43,7 +43,7 @@ def start_xtcp(server_ip, server_port, token, local_port, secret_key):
 @AisleCL.command(help='使用STCP作为主机')
 @click.option('--server_ip', default=SERVER_DOMAIN)
 @click.option('--server_port', default=SERVER_PORT)
-@click.option('--token', default=TOKEN)
+@click.option('--token', default=SERVER_TOKEN)
 @click.option('--local_port', default='25565')
 @click.option('--secret_key', default='')
 def start_stcp(server_ip, server_port, token, local_port, secret_key):
@@ -59,11 +59,10 @@ def start_stcp(server_ip, server_port, token, local_port, secret_key):
 
 @AisleCL.command(help='使用分享码加入别的主机')
 @click.option('--localPort', default='25565')
-@click.option('--token', default=TOKEN)
+@click.option('--token', default=SERVER_TOKEN)
 @click.argument('AisleCode')
 def join(localport, aislecode, token):
     core0 = Aisle.Aisle()
-    print(TOKEN)
     core0.joinAisleCode(_code=aislecode, localPort=localport, _token=token, tls=True)
     while 1:
         pass

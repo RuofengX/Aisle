@@ -12,7 +12,7 @@ NAT_TYPE_MAP = {"Blocked": "-", "Open Internet": 'SP', "Full Cone": "SSR", "Rest
 NAT_HELP = '家庭宽带如抽卡。家宽品质越高，网络连接越容易。一般来说，出现SSR品质则很容易建立连接；而如果出现N品质，则几乎不可能建立连接。'
 
 # OAR服务器的私有配置
-TOKEN = private.TOKEN
+SERVER_TOKEN = private.TOKEN
 SERVER_DOMAIN = private.SERVER_DOMAIN
 _rrset = dns.resolver.resolve(SERVER_DOMAIN, rdtype='A', raise_on_no_answer=False).rrset
 SERVER_IP = str(_rrset).split(' ')[4]

@@ -57,6 +57,10 @@ class Aisle(AisleDefault, object):  # 核心控制类，对应vps/用户电脑
     def __init__(self):
         super().__init__()
         self.logger.debug('初始化Aisle...')
+
+        # 详见 https://docs.python.org/3.7/library/multiprocessing.html?highlight=process#multiprocessing.freeze_support
+        multiprocessing.freeze_support()
+
         self.NATType = ''
         self.localIP = socket.gethostbyname(socket.gethostname())
         self.clientModuleInstance = {}
