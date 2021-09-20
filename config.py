@@ -1,7 +1,8 @@
+import os.path
+
 import colorlog
 # config.py将被编译到二进制代码中，但会被版本控制同步，请不要存放敏感数据
 import dns.resolver
-import private  # 模块化的私有参数才能让pyinstaller识别
 import random
 
 # -------DEBUG区域-------
@@ -31,6 +32,28 @@ LOG.setLevel(LOG_LEVEL)
 LOG.addHandler(CONSOLE_HANDLER)
 
 # -------AisleCL配置-------
+# ---私有模块导入---
+if os.path.exists('./private'):
+    import OAR.config  # 模块化的私有参数才能让pyinstaller识别
+
+    # -OAR服务器的私有配置-
+    SERVER_TOKEN = OAR.config.SERVER_TOKEN
+    SERVER_DOMAIN = OAR.config.SERVER_DOMAIN
+    SERVER_PORT = OAR.config.SERVER_PORT
+
+else:
+    LOG.warning(f'缺失OAR配置模块！请自行搭建frps公网服务器并建立自己的私有模块')
+    # -自建服务器的配置-
+    SERVER_TOKEN = ''
+    SERVER_DOMAIN = ''
+    SERVER_PORT = ''
+
+if SERVER_DOMAIN == '' \
+        or SERVER_TOKEN == '' \
+        or SERVER_PORT == '':
+    LOG.critical(f'请在config.py中填入自建公网服务器的参数')
+    raise SystemExit
+
 # ---多语言消息实现 | i18n Message---
 SPLIT_LINE = '-------------------------------------------'  # split line
 INFO = 'OAR Aisle是一个致力于打造沉浸式多人游戏联机体验的软件。'
@@ -40,9 +63,6 @@ NAT_TYPE_MAP = {"Blocked": "-", "Open Internet": 'SP', "Full Cone": "SSR", "Rest
                 "Restrict Port NAT": "R", "Symmetric NAT": "N"}
 NAT_HELP = '家庭宽带如抽卡。家宽品质越高，网络连接越容易。一般来说，出现SSR品质则很容易建立连接；而如果出现N品质，则几乎不可能建立连接。'
 
-# ---OAR服务器的私有配置---
-SERVER_TOKEN = private.TOKEN
-SERVER_DOMAIN = private.SERVER_DOMAIN
 try:
     _rrset = dns.resolver.resolve(SERVER_DOMAIN, rdtype='A', raise_on_no_answer=False).rrset
 except dns.exception.Timeout:
@@ -56,7 +76,8 @@ VERSION = 'PRE V1.2.3'
 LOG.info(f'版本号{VERSION}')
 FRP_VERSION = '0.37.1'  # 兼容的FRP版本
 TEMP_DIR_ROOT = './temp'
-TEMP_DIR = TEMP_DIR_ROOT + '/' + ''.join(random.sample('1234567890poiuytrewqasdfghjklmnbvcxz', 16))  # # 临时文件夹路径，附加随机一个子文件夹
+TEMP_DIR = TEMP_DIR_ROOT + '/' + ''.join(
+    random.sample('1234567890poiuytrewqasdfghjklmnbvcxz', 16))  # # 临时文件夹路径，附加随机一个子文件夹
 TLS_DIR = './ssl/'  # ssl证书文件夹路径
 UID_LENGTH = 5  # uid长度
 DEFAULT_CODEC = 'gbk'
