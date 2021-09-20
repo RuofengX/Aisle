@@ -66,9 +66,9 @@ Aisle项目是本人(RuofengX)的第一个真正意义上的Python开源项目�
 请使用Python3.9进行开发和编译。
 首先请搭建自己的公网服务器。
 主要文件有：
-- Aisle.py  python库文件，提供调用各种工具的方法
-- AisleCL.py  一个命令行工具，以CLI的方式呈现Aisle库的功能，可直接使用pyinstaller编译
-- config.py  加载一些配置以及实现多语言
+- Aisle.py  各类功能的实现
+- AisleCL.py  一个命令行工具，包含所有业务逻辑和一系列对Aisle的控制方法
+- config.py  加载全局配置和导入私有库，以及实现多语言
 - OAR/  一个私有库，存放OAR Aisle项目的安全敏感信息，不开源
 欢迎在issue中提出自己的功能需求  
 欢迎改进本人的代码并提交PR
