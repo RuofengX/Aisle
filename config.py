@@ -1,7 +1,6 @@
-import os.path
-
-import colorlog
 # config.py将被编译到二进制代码中，但会被版本控制同步，请不要存放敏感数据
+import os.path
+import colorlog
 import dns.resolver
 import random
 
@@ -31,29 +30,33 @@ LOG = colorlog.getLogger('GLOBAL')  # 添加全局LOG，避免使用logging.debu
 LOG.setLevel(LOG_LEVEL)
 LOG.addHandler(CONSOLE_HANDLER)
 
+
 # -------AisleCL配置-------
 # ---私有模块导入---
-if os.path.exists('./private'):
+if os.path.exists('./OAR'):
     import OAR.config  # 模块化的私有参数才能让pyinstaller识别
-
     # -OAR服务器的私有配置-
     SERVER_TOKEN = OAR.config.SERVER_TOKEN
     SERVER_DOMAIN = OAR.config.SERVER_DOMAIN
     SERVER_PORT = OAR.config.SERVER_PORT
-
 else:
     LOG.warning(f'缺失OAR配置模块！请自行搭建frps公网服务器并建立自己的私有模块')
-    # -自建服务器的配置-
-    SERVER_TOKEN = ''
-    SERVER_DOMAIN = ''
-    SERVER_PORT = ''
-
+    # -自建服务器的私有配置-
+    SERVER_TOKEN = ''  # frps的鉴权token
+    SERVER_DOMAIN = ''  # frps所在的公网服务器的域名 | 如果没有域名请自行修改DNS获取IP地址的逻辑
+    SERVER_PORT = ''  # frps监听的端口
 if SERVER_DOMAIN == '' \
         or SERVER_TOKEN == '' \
         or SERVER_PORT == '':
     LOG.critical(f'请在config.py中填入自建公网服务器的参数')
     raise SystemExit
-
+# ---获取域名对应IP---
+try:
+    _rrset = dns.resolver.resolve(SERVER_DOMAIN, rdtype='A', raise_on_no_answer=False).rrset
+except dns.exception.Timeout:
+    LOG.critical(f'无法解析域名，请检查网络连接和DNS服务器配置！')
+    raise SystemExit
+SERVER_IP = str(_rrset).split(' ')[4]
 # ---多语言消息实现 | i18n Message---
 SPLIT_LINE = '-------------------------------------------'  # split line
 INFO = 'OAR Aisle是一个致力于打造沉浸式多人游戏联机体验的软件。'
@@ -63,13 +66,6 @@ NAT_TYPE_MAP = {"Blocked": "-", "Open Internet": 'SP', "Full Cone": "SSR", "Rest
                 "Restrict Port NAT": "R", "Symmetric NAT": "N"}
 NAT_HELP = '家庭宽带如抽卡。家宽品质越高，网络连接越容易。一般来说，出现SSR品质则很容易建立连接；而如果出现N品质，则几乎不可能建立连接。'
 
-try:
-    _rrset = dns.resolver.resolve(SERVER_DOMAIN, rdtype='A', raise_on_no_answer=False).rrset
-except dns.exception.Timeout:
-    LOG.critical(f'无法解析域名，请检查网络连接和DNS服务器配置！')
-    raise SystemExit
-SERVER_IP = str(_rrset).split(' ')[4]
-SERVER_PORT = private.SERVER_PORT
 
 # -------Aisle配置-------
 VERSION = 'PRE V1.2.3'
