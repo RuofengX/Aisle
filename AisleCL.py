@@ -1,4 +1,4 @@
-#  Aisle的命令行程序，默认和OAR的服务器通信
+# Aisle的命令行程序，默认和OAR的服务器通信
 import Aisle
 import click
 from config import *
